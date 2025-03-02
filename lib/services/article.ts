@@ -1,32 +1,5 @@
 import api from '../axios'
-
-export interface Article {
-  id: number
-  title: string
-  description: string
-  content: string
-  published_at: string
-  url: string
-  image_url: string
-  created_at: string
-  updated_at: string
-  category: {
-    id: number
-    name: string
-    slug: string
-    created_at: string
-    updated_at: string
-    tags: string[]
-  }
-  author: {
-    id: number
-    source_id: number
-    name: string
-    slug: string
-    created_at: string
-    updated_at: string
-  }
-}
+import { Article } from '../types'
 
 interface ApiResponse<T> {
   success: boolean

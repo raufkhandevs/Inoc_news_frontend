@@ -1,7 +1,8 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { articleService, Article } from '../services/article'
+import { articleService } from '../services/article'
+import { Article } from '../types'
 
 interface ArticleData {
   articles: Article[]
@@ -11,7 +12,14 @@ interface ArticleData {
   lastPage: number
 }
 
-export function useArticle(params?: { search?: string; page?: number }) {
+interface ArticleParams {
+  search?: string
+  page?: number
+  author_ids?: number[]
+  category_ids?: number[]
+}
+
+export function useArticle(params?: ArticleParams) {
   const { data: exploreData, isLoading: isExploreLoading } = useQuery<ArticleData>({
     queryKey: ['articles', params],
     queryFn: async () => {

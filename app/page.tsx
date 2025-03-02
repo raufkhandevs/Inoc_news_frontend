@@ -21,7 +21,7 @@ import { useAuth } from "@/lib/hooks/use-auth"
 import { useCategory } from "@/lib/hooks/use-category"
 import { useAuthor } from "@/lib/hooks/use-author"
 import { useArticle } from "@/lib/hooks/use-article"
-import { Article } from "@/lib/services/article"
+import { Article } from "@/lib/types"
 import {
   Pagination,
   PaginationContent,
@@ -31,6 +31,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
+import { cn } from "@/lib/utils"
 
 export default function Home() {
   const router = useRouter()
@@ -39,6 +40,8 @@ export default function Home() {
   const { categories } = useCategory()
   const { authors } = useAuthor()
 
+  const [selectedAuthorIds, setSelectedAuthorIds] = useState<number[]>([])
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("explore")
   const [page, setPage] = useState(1)
@@ -54,7 +57,9 @@ export default function Home() {
     isMyFeedsLoading
   } = useArticle({
     search: debouncedSearch,
-    page
+    page,
+    author_ids: selectedAuthorIds,
+    category_ids: selectedCategoryIds
   })
 
   const handleLogout = async () => {
@@ -76,6 +81,30 @@ export default function Home() {
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
+  }
+
+  const handleCategoryClick = (categoryId: number) => {
+    setSelectedCategoryIds(prev => {
+      const isSelected = prev.includes(categoryId)
+      if (isSelected) {
+        return prev.filter(id => id !== categoryId)
+      } else {
+        return [...prev, categoryId]
+      }
+    })
+    setPage(1) // Reset to first page when changing filters
+  }
+
+  const handleAuthorClick = (authorId: number) => {
+    setSelectedAuthorIds(prev => {
+      const isSelected = prev.includes(authorId)
+      if (isSelected) {
+        return prev.filter(id => id !== authorId)
+      } else {
+        return [...prev, authorId]
+      }
+    })
+    setPage(1) // Reset to first page when changing filters
   }
 
   const currentPagination = activeTab === 'explore' ? explorePagination : myFeedsPagination
@@ -160,6 +189,8 @@ export default function Home() {
 
     return items
   }
+
+  const showSidebar = activeTab === 'explore'
 
   return (
     <div className="container mx-auto py-6">
@@ -246,8 +277,14 @@ export default function Home() {
         </Tabs>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
+      <div className={cn(
+        "grid gap-6",
+        showSidebar ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1"
+      )}>
+        <div className={cn(
+          "space-y-6",
+          showSidebar ? "md:col-span-2" : ""
+        )}>
           {(isExploreLoading && !exploreArticles.length) || (isMyFeedsLoading && !myFeedArticles.length) ? (
             <NewsCardSkeleton count={3} />
           ) : (
@@ -296,34 +333,50 @@ export default function Home() {
           )}
         </div>
 
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold">Categories</h2>
-          <div className="flex flex-wrap gap-2">
-            {categories?.map((category) => (
-              <Badge key={`category-${category.id}`} variant="secondary" className="cursor-pointer">
-                {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
-              </Badge>
-            ))}
-          </div>
+        {showSidebar && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold">Categories</h2>
+            <div className="flex flex-wrap gap-2">
+              {categories?.map((category) => (
+                <Badge
+                  key={`category-${category.id}`}
+                  variant={selectedCategoryIds.includes(category.id) ? "default" : "secondary"}
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => handleCategoryClick(category.id)}
+                >
+                  {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
+                </Badge>
+              ))}
+            </div>
 
-          <h2 className="text-xl font-bold mt-8">Popular Authors</h2>
-          <div className="space-y-3 max-h-[50vh] overflow-y-auto">
-            {authors?.map((author) => (
-              <div key={author.id} className="flex items-center gap-2 p-2 hover:bg-muted rounded-md cursor-pointer">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={`/placeholder.svg?height=24&width=24`} alt={author.name} />
-                  <AvatarFallback>
-                    {author.name
-                      .split(" ")
-                      .map((word) => word[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <span>{author.name}</span>
-              </div>
-            ))}
+            <h2 className="text-xl font-bold mt-8">Popular Authors</h2>
+            <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+              {authors?.map((author) => (
+                <div
+                  key={author.id}
+                  className={cn(
+                    "flex items-center gap-2 p-2 rounded-md cursor-pointer",
+                    selectedAuthorIds.includes(author.id)
+                      ? "bg-primary/10 hover:bg-primary/20"
+                      : "hover:bg-muted"
+                  )}
+                  onClick={() => handleAuthorClick(author.id)}
+                >
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={`/placeholder.svg?height=24&width=24`} alt={author.name} />
+                    <AvatarFallback>
+                      {author.name
+                        .split(" ")
+                        .map((word) => word[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span>{author.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <ProfileDialog open={showProfile} onOpenChange={setShowProfile} />
     </div>
