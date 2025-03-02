@@ -44,8 +44,11 @@ export const authService = {
     return response.data.data.user || null
   },
 
-  updateUser: async (data: Partial<User>): Promise<User> => {
-    const response = await api.patch('/auth/user', data)
+  updateUserPreferences: async (data: {
+    author_ids: number[]
+    category_ids: number[]
+  }): Promise<User> => {
+    const response = await api.patch('/auth/preferences', data)
     return response.data.data.user
   }
 } 

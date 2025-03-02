@@ -61,8 +61,8 @@ export function useAuth() {
     return user?.preferences.categories.length || user?.preferences.authors.length
   }, [user])
 
-  const updateUserMutation = useMutation({
-    mutationFn: authService.updateUser,
+  const updateUserPreferencesMutation = useMutation({
+    mutationFn: authService.updateUserPreferences,
     onSuccess: (updatedUser) => {
       queryClient.setQueryData(['user'], updatedUser)
     },
@@ -75,10 +75,10 @@ export function useAuth() {
     login: loginMutation.mutate,
     register: registerMutation.mutate,
     logout: logoutMutation.mutate,
-    updateUser: updateUserMutation.mutate,
+    updateUserPreferences: updateUserPreferencesMutation.mutate,
     isLoginLoading: loginMutation.isPending,
     isRegisterLoading: registerMutation.isPending,
     isLogoutLoading: logoutMutation.isPending,
-    isUpdateLoading: updateUserMutation.isPending,
+    isUpdatePreferencesLoading: updateUserPreferencesMutation.isPending,
   }
 } 

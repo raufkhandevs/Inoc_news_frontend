@@ -8,78 +8,56 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Newspaper, ArrowLeft, Check } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
+import { useAuth } from "@/lib/hooks/use-auth"
+import { useCategory } from "@/lib/hooks/use-category"
+import { useAuthor } from "@/lib/hooks/use-author"
+import { Author, Category } from "@/lib/types"
 
 export default function PreferencesPage() {
   const router = useRouter()
-  const [selectedAuthors, setSelectedAuthors] = useState<string[]>([])
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [isEditing, setIsEditing] = useState(false)
-
-  // Available options
-  const authors = [
-    "Tech Chronicle",
-    "Business Daily",
-    "Science Today",
-    "Sports Network",
-    "Health Insights",
-    "Political Review",
-    "Entertainment Weekly",
-    "Global News Network",
-  ]
-
-  const categories = [
-    "Technology",
-    "Business",
-    "Politics",
-    "Health",
-    "Science",
-    "Sports",
-    "Entertainment",
-    "World News",
-    "Economy",
-    "Education",
-  ]
+  const { user, updateUserPreferences } = useAuth()
+  const { categories, isLoading: categoriesLoading } = useCategory()
+  const { authors, isLoading: authorsLoading } = useAuthor()
+  const [selectedAuthorIds, setSelectedAuthorIds] = useState<number[]>([])
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([])
 
   useEffect(() => {
-    // Check if user is logged in
-    const user = localStorage.getItem("user")
     if (!user) {
       router.push("/login")
       return
     }
 
-    // Check if this is an edit (user already has preferences)
-    const preferences = localStorage.getItem("preferences")
-    if (preferences) {
-      const parsedPrefs = JSON.parse(preferences)
-      setSelectedAuthors(parsedPrefs.authors || [])
-      setSelectedCategories(parsedPrefs.categories || [])
-      setIsEditing(true)
+    // Set initial selections from user preferences
+    if (user.preferences) {
+      setSelectedAuthorIds(user.preferences.authors.map(author => author.id))
+      setSelectedCategoryIds(user.preferences.categories.map(category => category.id))
     }
-  }, [router])
+  }, [user, router])
 
-  const toggleAuthor = (author: string) => {
-    setSelectedAuthors((prev) => (prev.includes(author) ? prev.filter((a) => a !== author) : [...prev, author]))
-  }
-
-  const toggleCategory = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category],
+  const toggleAuthor = (authorId: number) => {
+    setSelectedAuthorIds((prev) => 
+      prev.includes(authorId) ? prev.filter(id => id !== authorId) : [...prev, authorId]
     )
   }
 
-  const handleSubmit = () => {
+  const toggleCategory = (categoryId: number) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(categoryId) ? prev.filter(id => id !== categoryId) : [...prev, categoryId]
+    )
+  }
+
+  const handleSubmit = async () => {
     // Validate at least 3 selections from each
-    if (selectedAuthors.length < 3) {
+    if (selectedAuthorIds.length < 3) {
       toast({
         title: "Selection Required",
-        description: "Please select at least 3 news sources",
+        description: "Please select at least 3 news authors",
         variant: "destructive",
       })
       return
     }
 
-    if (selectedCategories.length < 3) {
+    if (selectedCategoryIds.length < 3) {
       toast({
         title: "Selection Required",
         description: "Please select at least 3 categories",
@@ -88,22 +66,31 @@ export default function PreferencesPage() {
       return
     }
 
-    // Save preferences
-    localStorage.setItem(
-      "preferences",
-      JSON.stringify({
-        authors: selectedAuthors,
-        categories: selectedCategories,
-      }),
-    )
+    try {
+      // Update user preferences
+      await updateUserPreferences({
+          author_ids: selectedAuthorIds,
+          category_ids: selectedCategoryIds
+      })
 
-    toast({
-      title: isEditing ? "Preferences Updated" : "Preferences Saved",
-      description: "Your news feed preferences have been saved",
-    })
+      toast({
+        title: "Preferences Updated",
+        description: "Your news feed preferences have been saved",
+      })
 
-    // Redirect to home
-    router.push("/")
+      router.push("/")
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: "Error",
+        description: "Failed to save preferences",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (categoriesLoading || authorsLoading) {
+    return <div>Loading...</div>
   }
 
   return (
@@ -122,49 +109,48 @@ export default function PreferencesPage() {
               </div>
             </div>
             <CardTitle className="text-2xl text-center mt-6">
-              {isEditing ? "Edit Your Preferences" : "Personalize Your News Feed"}
+              {user?.preferences ? "Edit Your Preferences" : "Personalize Your News Feed"}
             </CardTitle>
             <CardDescription className="text-center">
-              Select at least 3 news sources and 3 categories that interest you
+              Select at least 3 news authors and 3 categories that interest you
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">News Sources</h3>
+          <div>
+              <h3 className="text-lg font-semibold mb-4">Categories</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Selected: {selectedAuthors.length} (minimum 3 required)
+                Selected: {selectedCategoryIds.length} (minimum 3 required)
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {authors.map((author) => (
-                  <div key={author} className="flex items-start space-x-2">
+                {categories?.map((category: Category) => (
+                  <div key={category.id} className="flex items-start space-x-2">
                     <Checkbox
-                      id={`author-${author}`}
-                      checked={selectedAuthors.includes(author)}
-                      onCheckedChange={() => toggleAuthor(author)}
+                      id={`category-${category.id}`}
+                      checked={selectedCategoryIds.includes(category.id)}
+                      onCheckedChange={() => toggleCategory(category.id)}
                     />
-                    <Label htmlFor={`author-${author}`} className="text-sm font-normal cursor-pointer">
-                      {author}
+                    <Label htmlFor={`category-${category.id}`} className="text-sm font-normal cursor-pointer">
+                      {category.name}
                     </Label>
                   </div>
                 ))}
               </div>
             </div>
-
             <div>
-              <h3 className="text-lg font-semibold mb-4">Categories</h3>
+              <h3 className="text-lg font-semibold mb-4">News Authors</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Selected: {selectedCategories.length} (minimum 3 required)
+                Selected: {selectedAuthorIds.length} (minimum 3 required)
               </p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {categories.map((category) => (
-                  <div key={category} className="flex items-start space-x-2">
+                {authors?.map((author: Author) => (
+                  <div key={author.id} className="flex items-start space-x-2">
                     <Checkbox
-                      id={`category-${category}`}
-                      checked={selectedCategories.includes(category)}
-                      onCheckedChange={() => toggleCategory(category)}
+                      id={`author-${author.id}`}
+                      checked={selectedAuthorIds.includes(author.id)}
+                      onCheckedChange={() => toggleAuthor(author.id)}
                     />
-                    <Label htmlFor={`category-${category}`} className="text-sm font-normal cursor-pointer">
-                      {category}
+                    <Label htmlFor={`author-${author.id}`} className="text-sm font-normal cursor-pointer">
+                      {author.name}
                     </Label>
                   </div>
                 ))}
@@ -175,10 +161,10 @@ export default function PreferencesPage() {
             <Button
               onClick={handleSubmit}
               className="w-full"
-              disabled={selectedAuthors.length < 3 || selectedCategories.length < 3}
+              disabled={selectedAuthorIds.length < 3 || selectedCategoryIds.length < 3}
             >
               <Check className="mr-2 h-4 w-4" />
-              {isEditing ? "Save Changes" : "Complete Setup"}
+              {user?.preferences ? "Save Changes" : "Complete Setup"}
             </Button>
           </CardFooter>
         </Card>
