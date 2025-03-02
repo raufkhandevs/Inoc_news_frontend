@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,102 +18,44 @@ import { useDebounce } from "@/lib/hooks/use-debounce"
 import { ProfileDialog } from "@/components/profile-dialog"
 import { toast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/hooks/use-auth"
+import { useCategory } from "@/lib/hooks/use-category"
+import { useAuthor } from "@/lib/hooks/use-author"
+import { useArticle } from "@/lib/hooks/use-article"
+import { Article } from "@/lib/services/article"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 
 export default function Home() {
   const router = useRouter()
   const { setTheme } = useTheme()
   const { user, logout, hasPreferences } = useAuth()
+  const { categories } = useCategory()
+  const { authors } = useAuthor()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("explore")
-  const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [isSearching, setIsSearching] = useState<boolean>(false)
-  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false)
+  const [page, setPage] = useState(1)
+  const [showProfile, setShowProfile] = useState(false)
   const debouncedSearch = useDebounce(searchQuery, 300)
-  const [showProfile, setShowProfile] = useState<boolean>(false)
 
-  // Check if user is logged in on component mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      // const user = localStorage.getItem("user") // No longer needed
-      // if (user) {
-      //   setIsLoggedIn(true)
-      // }
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      setIsLoading(false)
-    }
-    checkAuth()
-  }, [])
-
-  // Handle search
-  useEffect(() => {
-    const performSearch = async () => {
-      if (debouncedSearch) {
-        setIsSearching(true)
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 800))
-        setIsSearching(false)
-      }
-    }
-    performSearch()
-  }, [debouncedSearch])
-
-  // Mock news data
-  const allNews = [
-    {
-      id: 1,
-      title: "Major Tech Company Announces Revolutionary AI Product",
-      description:
-        "A major tech company has unveiled a groundbreaking AI product that promises to revolutionize how we interact with technology. Industry experts are calling it a game-changer.",
-      category: "Technology",
-      source: "Tech Chronicle",
-      time: "3 hours ago",
-    },
-    {
-      id: 2,
-      title: "Global Markets React to New Economic Policies",
-      description:
-        "Stock markets worldwide showed mixed reactions today as new economic policies were announced by several major economies. Analysts predict volatility in the coming weeks.",
-      category: "Business",
-      source: "Business Daily",
-      time: "5 hours ago",
-    },
-    {
-      id: 3,
-      title: "Breakthrough in Renewable Energy Storage",
-      description:
-        "Scientists have developed a new type of battery that could solve one of the biggest challenges in renewable energy: efficient, long-term storage. This could accelerate the transition to clean energy.",
-      category: "Science",
-      source: "Science Today",
-      time: "1 day ago",
-    },
-    {
-      id: 4,
-      title: "Major Sports Team Announces Surprising Trade Deal",
-      description:
-        "In an unexpected move, one of the leading teams has traded their star player in what analysts are calling 'the deal of the decade'. Fans have expressed mixed reactions on social media.",
-      category: "Sports",
-      source: "Sports Network",
-      time: "12 hours ago",
-    },
-    {
-      id: 5,
-      title: "New Study Reveals Benefits of Mediterranean Diet",
-      description:
-        "A comprehensive study spanning over a decade has confirmed significant health benefits of following a Mediterranean diet, including reduced risk of heart disease and improved longevity.",
-      category: "Health",
-      source: "Health Insights",
-      time: "2 days ago",
-    },
-  ]
-
-  // Mock personalized news (would come from API based on user preferences)
-  const myNews = allNews.filter(
-    (news) =>
-      ["Technology", "Science", "Health"].includes(news.category) ||
-      ["Tech Chronicle", "Science Today"].includes(news.source),
-  )
+  const {
+    exploreArticles,
+    myFeedArticles,
+    explorePagination,
+    myFeedsPagination,
+    isExploreLoading,
+    isMyFeedsLoading
+  } = useArticle({
+    search: debouncedSearch,
+    page
+  })
 
   const handleLogout = async () => {
     try {
@@ -132,8 +74,91 @@ export default function Home() {
     }
   }
 
-  if (isLoading) {
-    return <PageSkeleton />
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+  }
+
+  const currentPagination = activeTab === 'explore' ? explorePagination : myFeedsPagination
+  const totalPages = currentPagination?.lastPage || 1
+
+  const renderPaginationItems = () => {
+    const items = []
+    const maxVisible = 5
+    const currentPage = currentPagination?.currentPage || 1
+
+    if (totalPages <= maxVisible) {
+      // Show all pages if total is less than or equal to maxVisible
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        )
+      }
+    } else {
+      // Always show first page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      )
+
+      // Show ellipsis if needed
+      if (currentPage > 3) {
+        items.push(
+          <PaginationItem key="start-ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        )
+      }
+
+      // Show current page and surrounding pages
+      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        )
+      }
+
+      // Show ellipsis if needed
+      if (currentPage < totalPages - 2) {
+        items.push(
+          <PaginationItem key="end-ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        )
+      }
+
+      // Always show last page
+      items.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink
+            onClick={() => handlePageChange(totalPages)}
+            isActive={currentPage === totalPages}
+          >
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      )
+    }
+
+    return items
   }
 
   return (
@@ -189,9 +214,10 @@ export default function Home() {
             onChange={(e) => {
               setSearchQuery(e.target.value)
               setActiveTab("explore")
+              setPage(1)
             }}
           />
-          {isSearching && (
+          {isExploreLoading && debouncedSearch && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               <Spinner />
             </div>
@@ -222,100 +248,80 @@ export default function Home() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
-          {isSearching ? (
+          {(isExploreLoading && !exploreArticles.length) || (isMyFeedsLoading && !myFeedArticles.length) ? (
             <NewsCardSkeleton count={3} />
           ) : (
             <>
               {user ? (
                 <Tabs value={activeTab} className="w-full">
                   <TabsContent value="explore" className="space-y-6">
-                    {allNews
-                      .filter((news) =>
-                        searchQuery
-                          ? news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          news.description.toLowerCase().includes(searchQuery.toLowerCase())
-                          : true,
-                      )
-                      .map((news) => (
-                        <NewsCard key={news.id} news={news} />
-                      ))}
+                    {exploreArticles.map((article) => (
+                      <NewsCard key={article.id} article={article} />
+                    ))}
                   </TabsContent>
                   <TabsContent value="my" className="space-y-6">
-                    {myNews.map((news) => (
-                      <NewsCard key={news.id} news={news} />
+                    {myFeedArticles.map((article) => (
+                      <NewsCard key={article.id} article={article} />
                     ))}
                   </TabsContent>
                 </Tabs>
               ) : (
                 <>
-                  {allNews
-                    .filter((news) =>
-                      searchQuery
-                        ? news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        news.description.toLowerCase().includes(searchQuery.toLowerCase())
-                        : true,
-                    )
-                    .map((news) => (
-                      <NewsCard key={news.id} news={news} />
-                    ))}
+                  {exploreArticles.map((article) => (
+                    <NewsCard key={article.id} article={article} />
+                  ))}
                 </>
               )}
-            </>
-          )}
 
-          {!isSearching && (
-            <div className="flex justify-center pt-4">
-              <Button
-                variant="outline"
-                onClick={async () => {
-                  setIsLoadingMore(true)
-                  // Simulate loading more content
-                  await new Promise((resolve) => setTimeout(resolve, 1000))
-                  setIsLoadingMore(false)
-                }}
-                disabled={isLoadingMore}
-              >
-                {isLoadingMore ? (
-                  <>
-                    <Spinner className="mr-2" />
-                    Loading more...
-                  </>
-                ) : (
-                  "Load More"
-                )}
-              </Button>
-            </div>
+              {currentPagination && (
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => handlePageChange(page - 1)}
+                        disabled={page === 1}
+                      />
+                    </PaginationItem>
+                    {renderPaginationItems()}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => handlePageChange(page + 1)}
+                        disabled={page === totalPages}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </>
           )}
         </div>
 
         <div className="space-y-6">
           <h2 className="text-xl font-bold">Categories</h2>
           <div className="flex flex-wrap gap-2">
-            {["Technology", "Business", "Politics", "Health", "Science", "Sports", "Entertainment"].map((category) => (
-              <Badge key={category} variant="secondary" className="cursor-pointer">
-                {category}
+            {categories?.map((category) => (
+              <Badge key={`category-${category.id}`} variant="secondary" className="cursor-pointer">
+                {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
               </Badge>
             ))}
           </div>
 
-          <h2 className="text-xl font-bold mt-8">Popular Sources</h2>
-          <div className="space-y-3">
-            {["Tech Chronicle", "Business Daily", "Science Today", "Sports Network", "Health Insights"].map(
-              (source) => (
-                <div key={source} className="flex items-center gap-2 p-2 hover:bg-muted rounded-md cursor-pointer">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={`/placeholder.svg?height=24&width=24`} alt={source} />
-                    <AvatarFallback>
-                      {source
-                        .split(" ")
-                        .map((word) => word[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span>{source}</span>
-                </div>
-              ),
-            )}
+          <h2 className="text-xl font-bold mt-8">Popular Authors</h2>
+          <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+            {authors?.map((author) => (
+              <div key={author.id} className="flex items-center gap-2 p-2 hover:bg-muted rounded-md cursor-pointer">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={`/placeholder.svg?height=24&width=24`} alt={author.name} />
+                  <AvatarFallback>
+                    {author.name
+                      .split(" ")
+                      .map((word) => word[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <span>{author.name}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -324,17 +330,16 @@ export default function Home() {
   )
 }
 
-// TODO: Remove this once the type is defined
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function NewsCard({ news }: { news: any }) {
+function NewsCard({ article }: { article: Article }) {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleReadMore = async () => {
     setIsLoading(true)
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800))
-    setIsLoading(false)
-    // Handle read more action
+    try {
+      window.open(article.url, '_blank')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -342,32 +347,32 @@ function NewsCard({ news }: { news: any }) {
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <CardTitle className="text-lg hover:text-primary cursor-pointer">{news.title}</CardTitle>
+            <CardTitle className="text-lg hover:text-primary cursor-pointer">{article.title}</CardTitle>
             <CardDescription className="flex items-center gap-1 mt-1">
               <Clock className="h-3 w-3" />
-              <span>{news.time}</span>
+              <span>{new Date(article.published_at).toLocaleDateString()}</span>
               <span className="mx-1">•</span>
-              <span>{news.source}</span>
+              <span>Source {article.author.source_id}</span>
             </CardDescription>
           </div>
-          <Badge variant="outline">{news.category}</Badge>
+          <Badge variant="outline">{article.category.name}</Badge>
         </div>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">{news.description}</p>
+        <div className="text-muted-foreground" dangerouslySetInnerHTML={{ __html: article.description }} />
       </CardContent>
       <CardFooter className="flex justify-between">
         <div className="flex items-center gap-2">
           <Avatar className="h-6 w-6">
-            <AvatarImage src={`/placeholder.svg?height=24&width=24`} alt="Publisher" />
+            <AvatarImage src={article.image_url || `/placeholder.svg?height=24&width=24`} alt={article.author.name} />
             <AvatarFallback>
-              {news.source
+              {article.author.name
                 .split(" ")
-                .map((word: string) => word[0])
+                .map((word) => word[0])
                 .join("")}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm text-muted-foreground">{news.source}</span>
+          <span className="text-sm text-muted-foreground">{article.author.name}</span>
         </div>
         <Button variant="ghost" size="sm" className="gap-1" onClick={handleReadMore} disabled={isLoading}>
           {isLoading ? <Spinner className="mr-2" /> : <ExternalLink className="h-4 w-4" />}
@@ -407,52 +412,6 @@ function NewsCardSkeleton({ count = 1 }: { count?: number }) {
           </Card>
         ))}
     </>
-  )
-}
-
-function PageSkeleton() {
-  return (
-    <div className="container mx-auto py-6">
-      <header className="flex flex-col gap-6 mb-8">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-8 w-[200px]" />
-          <div className="flex gap-4">
-            <Skeleton className="h-10 w-[80px]" />
-            <Skeleton className="h-10 w-[80px]" />
-          </div>
-        </div>
-        <Skeleton className="h-10 w-full" />
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
-          <NewsCardSkeleton count={3} />
-        </div>
-
-        <div className="space-y-6">
-          <Skeleton className="h-6 w-[100px] mb-4" />
-          <div className="flex flex-wrap gap-2">
-            {Array(7)
-              .fill(0)
-              .map((_, i) => (
-                <Skeleton key={i} className="h-6 w-[100px]" />
-              ))}
-          </div>
-
-          <Skeleton className="h-6 w-[120px] mt-8 mb-4" />
-          <div className="space-y-3">
-            {Array(5)
-              .fill(0)
-              .map((_, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Skeleton className="h-6 w-6 rounded-full" />
-                  <Skeleton className="h-6 w-[150px]" />
-                </div>
-              ))}
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }
 
