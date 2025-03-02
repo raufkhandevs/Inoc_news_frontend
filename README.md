@@ -1,36 +1,157 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# News Aggregator
+
+A modern news aggregation platform built with Next.js 14, React 19, TypeScript, and shadcn/ui. This application allows users to customize their news feed, manage preferences, and stay updated with the latest news from various sources.
+
+![News Aggregator Screenshot](/placeholder.svg?height=400&width=800)
+
+## Features
+
+- 🔐 **Authentication System**
+  - User registration and login
+  - Cookie-based JWT token storage
+  - Protected routes with middleware
+  - Profile management and preferences
+  - User preferences persistence
+
+- 📰 **News Feed Management**
+  - Explore tab for all news
+  - Personalized "My Feeds" based on preferences
+  - Category-based filtering
+  - Author-based filtering
+  - Real-time search functionality
+  - Advanced pagination system
+
+- 🎯 **Content Filtering**
+  - Multi-select category filters
+  - Author selection system
+  - Source-based filtering
+  - Combined filters support
+  - Filter state persistence
+
+- 📱 **Responsive Design**
+  - Mobile-first approach
+  - Adaptive layouts
+  - Collapsible sidebar
+  - Dynamic grid system
+  - Smooth transitions
+
+- 🎨 **Modern UI/UX**
+  - Dark/Light mode support
+  - Clean and intuitive interface
+  - Loading states and skeletons
+  - Toast notifications
+  - Interactive cards
+  - Avatar system
+
+- ⚡ **Performance**
+  - Server-side rendering
+  - React Query for data fetching
+  - Debounced search
+  - Optimized images
+  - Lazy loading
+  - Efficient state management
+
+## Tech Stack
+
+- **Framework:** Next.js 14
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
+- **UI Components:** shadcn/ui
+- **State Management:** React Query + Context
+- **Authentication:** JWT with HTTP-only cookies
+- **HTTP Client:** Axios
+- **Form Handling:** React Hook Form
+- **Icons:** Lucide React
+- **Utilities:** 
+  - clsx/tailwind-merge for class management
+  - js-cookie for cookie handling
+  - date-fns for date formatting
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- npm or yarn
+- Git
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/news-aggregator.git
+cd news-aggregator
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
+Edit `.env.local` with your configuration.
+
+4. Start the development server:
 ```bash
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+news-aggregator/
+├── app/                    # Next.js app directory
+│   └── page.tsx           # Main page
+├── components/            # Reusable components
+│   ├── ui/               # UI components
+│   └── ...               # Feature components
+├── lib/                   # Utility functions
+│   ├── hooks/            # Custom hooks
+│   ├── services/         # API services
+│   └── types/            # TypeScript types
+└── public/               # Static assets
+```
 
-## Learn More
+## Features in Detail
 
-To learn more about Next.js, take a look at the following resources:
+### Authentication Flow
+- Register with email/password
+- Login with credentials
+- Secure token storage
+- Automatic token refresh
+- Session management
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### News Feed System
+- Explore all articles
+- Personalized feed based on preferences
+- Advanced filtering options
+- Real-time search
+- Pagination with page numbers
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### User Preferences
+- Category selection
+- Author following
+- Source filtering
+- Preference persistence
+- Easy preference updates
 
-## Deploy on Vercel
+## Contributing
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
