@@ -1,10 +1,8 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,21 +10,22 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Newspaper, ArrowLeft } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
+import { useAuth } from "@/lib/hooks/use-auth"
+import { Spinner } from "@/components/ui/spinner"
 
 export default function RegisterPage() {
-  const router = useRouter()
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
+  const { register, isRegisterLoading } = useAuth()
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
+  const [passwordConfirmation, setPasswordConfirmation] = useState("")
   const [termsAccepted, setTermsAccepted] = useState(false)
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault()
 
     // Simple validation
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+    if (!name || !email || !password || !passwordConfirmation) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -35,7 +34,7 @@ export default function RegisterPage() {
       return
     }
 
-    if (password !== confirmPassword) {
+    if (password !== passwordConfirmation) {
       toast({
         title: "Error",
         description: "Passwords do not match",
@@ -53,26 +52,30 @@ export default function RegisterPage() {
       return
     }
 
-    // Store user data
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        firstName,
-        lastName,
+    register(
+      {
+        name,
         email,
-        // You can add more fields here like:
-        // avatar: null, // for profile picture
-        joinedDate: new Date().toISOString(),
-      }),
+        password,
+        password_confirmation: passwordConfirmation,
+      },
+      {
+        onSuccess: (response) => {
+          toast({
+            title: "Success",
+            description: response.message || "Account created successfully",
+          })
+          // Redirect will be handled by the useAuth hook
+        },
+        onError: (error) => {
+          toast({
+            title: "Error",
+            description: error instanceof Error ? error.message : "Failed to create account",
+            variant: "destructive",
+          })
+        },
+      }
     )
-
-    toast({
-      title: "Account created",
-      description: "Please select your preferences to continue",
-    })
-
-    // Redirect to preferences selection page
-    router.push("/preferences")
   }
 
   return (
@@ -94,27 +97,16 @@ export default function RegisterPage() {
         </CardHeader>
         <form onSubmit={handleRegister}>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First name</Label>
-                <Input
-                  id="firstName"
-                  placeholder="John"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last name</Label>
-                <Input
-                  id="lastName"
-                  placeholder="Doe"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                disabled={isRegisterLoading}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -125,6 +117,7 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isRegisterLoading}
               />
             </div>
             <div className="space-y-2">
@@ -135,16 +128,18 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isRegisterLoading}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="passwordConfirmation">Confirm Password</Label>
               <Input
-                id="confirmPassword"
+                id="passwordConfirmation"
                 type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={passwordConfirmation}
+                onChange={(e) => setPasswordConfirmation(e.target.value)}
                 required
+                disabled={isRegisterLoading}
               />
             </div>
             <div className="flex items-center space-x-2">
@@ -152,6 +147,7 @@ export default function RegisterPage() {
                 id="terms"
                 checked={termsAccepted}
                 onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                disabled={isRegisterLoading}
               />
               <Label htmlFor="terms" className="text-sm font-normal">
                 I agree to the{" "}
@@ -166,8 +162,15 @@ export default function RegisterPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full">
-              Register
+            <Button type="submit" className="w-full" disabled={isRegisterLoading}>
+              {isRegisterLoading ? (
+                <>
+                  <Spinner className="mr-2" />
+                  Creating account...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </Button>
             <div className="text-center text-sm">
               Already have an account?{" "}

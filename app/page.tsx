@@ -10,26 +10,27 @@ import { Newspaper, TrendingUp, Clock, ExternalLink, Settings, LogOut, Search, U
 import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useTheme } from "next-themes" // Change this line
+import { useTheme } from "next-themes"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 import { useDebounce } from "@/lib/hooks/use-debounce"
 import { ProfileDialog } from "@/components/profile-dialog"
-import { useAuth } from "@/lib/context/auth-context"
 import { toast } from "@/components/ui/use-toast"
+import { useAuth } from "@/lib/hooks/use-auth"
 
 export default function Home() {
   const router = useRouter()
-  const { setTheme } = useTheme() // This will now work correctly
-  const { user, logout } = useAuth()
+  const { setTheme } = useTheme()
+  const { user, logout, hasPreferences } = useAuth()
+
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("explore")
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSearching, setIsSearching] = useState(false)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isSearching, setIsSearching] = useState<boolean>(false)
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false)
   const debouncedSearch = useDebounce(searchQuery, 300)
-  const [showProfile, setShowProfile] = useState(false)
+  const [showProfile, setShowProfile] = useState<boolean>(false)
 
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -200,10 +201,10 @@ export default function Home() {
 
       {user && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid w-[200px] grid-cols-2">
+          {hasPreferences && <TabsList className="grid w-[200px] grid-cols-2">
             <TabsTrigger value="explore">Explore</TabsTrigger>
             <TabsTrigger value="my">My Feeds</TabsTrigger>
-          </TabsList>
+          </TabsList>}
           <TabsContent value="explore">
             <h2 className="text-xl font-bold flex items-center gap-2 mb-4">
               <TrendingUp className="h-5 w-5" />
@@ -232,7 +233,7 @@ export default function Home() {
                       .filter((news) =>
                         searchQuery
                           ? news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            news.description.toLowerCase().includes(searchQuery.toLowerCase())
+                          news.description.toLowerCase().includes(searchQuery.toLowerCase())
                           : true,
                       )
                       .map((news) => (
@@ -251,7 +252,7 @@ export default function Home() {
                     .filter((news) =>
                       searchQuery
                         ? news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          news.description.toLowerCase().includes(searchQuery.toLowerCase())
+                        news.description.toLowerCase().includes(searchQuery.toLowerCase())
                         : true,
                     )
                     .map((news) => (
