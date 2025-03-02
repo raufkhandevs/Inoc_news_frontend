@@ -17,6 +17,7 @@ interface ArticleParams {
   page?: number
   author_ids?: number[]
   category_ids?: number[]
+  shouldFetchMyFeeds?: boolean
 }
 
 export function useArticle(params?: ArticleParams) {
@@ -47,6 +48,7 @@ export function useArticle(params?: ArticleParams) {
         lastPage: response.data.last_page,
       }
     },
+    enabled: !!params?.shouldFetchMyFeeds,
   })
 
   return {

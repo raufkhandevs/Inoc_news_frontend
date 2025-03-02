@@ -37,6 +37,11 @@ api.interceptors.response.use(
       try {
         // Refresh token logic would go here
         const token = await refreshToken()
+
+        if (!token) {
+          throw new Error("Refresh token not implemented")
+        }
+        
         Cookies.set("auth-token", token)
 
         // Retry the original request with the new token
@@ -54,12 +59,8 @@ api.interceptors.response.use(
 )
 
 async function refreshToken() {
-  // This would be your refresh token logic
-  // TODO: Implement refresh token logic
-  return "new-token"
-  console.log("Refreshing token")
-  // For now, just throwing an error
-  throw new Error("Refresh token not implemented")
+  // not implemented
+  return ""
 }
 
 export default api

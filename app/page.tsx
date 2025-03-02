@@ -45,7 +45,8 @@ export default function Home() {
     search: debouncedSearch,
     page,
     author_ids: selectedAuthorIds,
-    category_ids: selectedCategoryIds
+    category_ids: selectedCategoryIds,
+    shouldFetchMyFeeds: !!user && activeTab === "my"
   })
 
   const handlePageChange = (newPage: number) => {
@@ -165,12 +166,12 @@ export default function Home() {
         isLoading={isExploreLoading}
       />
 
-      {user && (
+      {user && hasPreferences && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          {hasPreferences && <TabsList className="grid w-[200px] grid-cols-2">
+          <TabsList className="grid w-[200px] grid-cols-2">
             <TabsTrigger value="explore">Explore</TabsTrigger>
             <TabsTrigger value="my">My Feeds</TabsTrigger>
-          </TabsList>}
+          </TabsList>
           <TabsContent value="explore">
             <h2 className="text-xl font-bold flex items-center gap-2 mb-4">
               <TrendingUp className="h-5 w-5" />
@@ -198,7 +199,7 @@ export default function Home() {
             <NewsCardSkeleton count={3} />
           ) : (
             <>
-              {user ? (
+              {user && hasPreferences ? (
                 <Tabs value={activeTab} className="w-full">
                   <TabsContent value="explore" className="space-y-6">
                     {exploreArticles.map((article) => (
@@ -212,11 +213,11 @@ export default function Home() {
                   </TabsContent>
                 </Tabs>
               ) : (
-                <>
+                <div className="space-y-6">
                   {exploreArticles.map((article) => (
                     <NewsCard key={article.id} article={article} />
                   ))}
-                </>
+                </div>
               )}
 
               {currentPagination && (
