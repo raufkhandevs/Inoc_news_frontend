@@ -74,8 +74,9 @@ A modern news aggregation platform built with Next.js 14, React 19, TypeScript, 
 - Node.js 18+ 
 - npm or yarn
 - Git
+- Docker (optional)
 
-### Installation
+### Standard Installation
 
 1. Clone the repository:
 ```bash
@@ -92,9 +93,9 @@ yarn install
 
 3. Set up environment variables:
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
-Edit `.env.local` with your configuration.
+Edit `.env` with your configuration.
 
 4. Start the development server:
 ```bash
@@ -105,11 +106,66 @@ yarn dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+### Docker Installation
+
+The application can be run using Docker for both development and production environments.
+
+1. Clone the repository and navigate to the project directory:
+```bash
+git clone https://github.com/yourusername/news-aggregator.git
+cd news-aggregator
+```
+
+2. Set up environment variables:
+```bash
+cp .env.example .env
+```
+Edit `.env` with your configuration. This file will be used directly by the development server.
+
+3. Development mode:
+```bash
+# Start the development server with hot-reload
+docker-compose up web-dev
+```
+The development server will use the `.env` file directly, making it easy to update environment variables during development.
+
+4. Production mode:
+```bash
+# Build and start the production server
+docker-compose up web-prod
+```
+For production, environment variables should be set in your deployment environment or passed directly to docker-compose.
+
+5. Build production image manually:
+```bash
+docker build -t news-frontend .
+docker run -p 3000:3000 --env-file .env.production news-frontend
+```
+
+### Docker Configuration
+
+The project includes:
+- Multi-stage Dockerfile for optimized builds
+- Development configuration with hot-reload and direct `.env` file usage
+- Production configuration with optimized builds
+- Volume mounts for local development
+- Environment variable handling
+  - Development: Uses `.env` file directly
+  - Production: Uses environment variables from deployment platform
+- Network isolation
+
+Key Docker files:
+- `Dockerfile`: Multi-stage build configuration
+- `docker-compose.yml`: Development and production service definitions
+- `.dockerignore`: Excludes unnecessary files from builds
+
 ## Project Structure
 
 ```
 news-aggregator/
 ├── app/                    # Next.js app directory
+│   ├── (auth)/            # Authentication routes
+│   ├── api/               # API routes
 │   └── page.tsx           # Main page
 ├── components/            # Reusable components
 │   ├── ui/               # UI components

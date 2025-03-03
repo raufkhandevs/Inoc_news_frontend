@@ -1,0 +1,36 @@
+services:
+  # Development service
+  web-dev:
+    build:
+      context: .
+      target: deps
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    networks:
+      - app-network
+
+  # Production service
+  web-prod:
+    build:
+      context: .
+      target: runner
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge 
