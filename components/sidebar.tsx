@@ -2,8 +2,9 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
+import { cn, truncateText } from "@/lib/utils"
 import { Category, Author } from "@/lib/types"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface SidebarProps {
   categories: Category[]
@@ -60,7 +61,18 @@ export function Sidebar({
                   .join("")}
               </AvatarFallback>
             </Avatar>
-            <span>{author.name}</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    {truncateText(author.name)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{author.name}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         ))}
       </div>

@@ -20,7 +20,9 @@ export function NewsCard({ article }: NewsCardProps) {
   const handleReadMore = async () => {
     setIsLoading(true)
     try {
-      window.open(article.url, '_blank')
+      if (window) {
+        window.open(article.url, '_blank')
+      }
     } finally {
       setIsLoading(false)
     }

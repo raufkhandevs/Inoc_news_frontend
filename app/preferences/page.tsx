@@ -12,6 +12,8 @@ import { useAuth } from "@/lib/hooks/use-auth"
 import { useCategory } from "@/lib/hooks/use-category"
 import { useAuthor } from "@/lib/hooks/use-author"
 import { Author, Category } from "@/lib/types"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { truncateText } from "@/lib/utils"
 
 export default function PreferencesPage() {
   const router = useRouter()
@@ -129,9 +131,18 @@ export default function PreferencesPage() {
                       checked={selectedCategoryIds.includes(category.id)}
                       onCheckedChange={() => toggleCategory(category.id)}
                     />
-                    <Label htmlFor={`category-${category.id}`} className="text-sm font-normal cursor-pointer">
-                      {category.name}
-                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Label htmlFor={`category-${category.id}`} className="text-sm font-normal cursor-pointer">
+                            {truncateText(category.name)}
+                          </Label>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{category.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 ))}
               </div>
@@ -149,9 +160,18 @@ export default function PreferencesPage() {
                       checked={selectedAuthorIds.includes(author.id)}
                       onCheckedChange={() => toggleAuthor(author.id)}
                     />
-                    <Label htmlFor={`author-${author.id}`} className="text-sm font-normal cursor-pointer">
-                      {author.name}
-                    </Label>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Label htmlFor={`author-${author.id}`} className="text-sm font-normal cursor-pointer">
+                            {truncateText(author.name)}
+                          </Label>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{author.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 ))}
               </div>
@@ -172,4 +192,3 @@ export default function PreferencesPage() {
     </div>
   )
 }
-
